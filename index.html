@@ -28,6 +28,8 @@
   .list h2{font-size:15px;margin:0 0 6px}
   .list div{padding:3px 0;font-size:14px}
   .list .me{color:#15803d;font-weight:bold}
+  .g{color:#16a34a;font-weight:bold}
+  .r{color:#dc2626;font-weight:bold}
   .hide{display:none}
 </style>
 </head>
@@ -80,6 +82,9 @@
 // ▼ آدرس Web App که از Google Apps Script می‌گیرید را اینجا بگذارید
 const API = "https://script.google.com/macros/s/AKfycbwRrf-x_8L0E4LJVL9rVEkfVauCkoPlgtZl-G0MxE4QnWBaew7kvOM4Tk4AwNr8odaL/exec";
 
+// ▼ مدت نمایش صفحه بعد از ثبت (برحسب ثانیه) - برای تغییر زمان فقط این عدد را عوض کنید
+const WAIT_SECONDS = 15;
+
 const $ = id => document.getElementById(id);
 const fa = n => Number(n).toLocaleString('fa-IR');
 const D = '۰۱۲۳۴۵۶۷۸۹', A = '٠١٢٣٤٥٦٧٨٩';
@@ -122,8 +127,9 @@ $('b1').onclick = async () => {
 $('b2n').onclick = () => { $('code').value = ''; show('s1'); };
 
 $('b2y').onclick = () => {
-  $('ask').textContent = 'شما درخواست شرکت در ' + info.title + ' در تاریخ‌های ' + info.dates +
-    ' را دارید. چنانچه از حضور خود در این کلاس‌ها اطمینان دارید دکمه تایید را بزنید، در غیر این صورت رد را بزنید.';
+  const esc = x => String(x).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  $('ask').innerHTML = 'شما درخواست شرکت در ' + esc(info.title) + ' در تاریخ‌های ' + esc(info.dates) +
+    ' را دارید. چنانچه از حضور خود در این کلاس‌ها اطمینان دارید دکمه <span class="g">تایید</span> را بزنید، در غیر این صورت <span class="r">رد</span> را بزنید.';
   show('s3');
 };
 
@@ -137,7 +143,7 @@ function showResult(name, dates, num, list){
     box.appendChild(row);
   });
   show('s4');
-  let t = 10;
+  let t = WAIT_SECONDS;
   $('timer').textContent = 'این صفحه تا ' + fa(t) + ' ثانیه دیگر بسته می‌شود.';
   const iv = setInterval(() => {
     t--;
@@ -145,7 +151,7 @@ function showResult(name, dates, num, list){
     clearInterval(iv);
     end('ثبت‌نام شما انجام شد.<br>می‌توانید این صفحه را ببندید.');
     try{ window.close(); }catch(e){}
-  }, 1500);
+  }, 1000);
 }
 
 async function submit(decision){
