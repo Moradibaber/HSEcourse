@@ -12,7 +12,7 @@
   h1{font-size:18px;margin:0 0 16px;text-align:center}
   p{line-height:2;margin:8px 0}
   input{width:100%;padding:14px;font-size:18px;border:1px solid #cbd5e1;border-radius:10px;text-align:center;direction:ltr;font-family:inherit}
-  button{width:0%;padding:14px;font-size:16px;border:0;border-radius:px;margin-top:12px;cursor:pointer;color:#fff;font-family:inherit}
+  button{width:100%;padding:14px;font-size:16px;border:0;border-radius:10px;margin-top:12px;cursor:pointer;color:#fff;font-family:inherit}
   button.blue{background:#2563eb}
   button.green{background:#16a34a}
   button.red{background:#dc2626}
@@ -137,7 +137,7 @@ function showResult(name, dates, num, list){
     box.appendChild(row);
   });
   show('s4');
-  let t = 15;
+  let t = 10;
   $('timer').textContent = 'این صفحه تا ' + fa(t) + ' ثانیه دیگر بسته می‌شود.';
   const iv = setInterval(() => {
     t--;
