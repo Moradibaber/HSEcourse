@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ثبت‌نام دوره ایمنی</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Tahoma,Vazirmatn,sans-serif;background:#eef2f6;color:#1f2937;display:flex;justify-content:center;padding:16px}
+  .card{background:#fff;width:100%;max-width:420px;border-radius:14px;padding:22px;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-top:24px}
+  h1{font-size:18px;margin:0 0 16px;text-align:center}
+  p{line-height:2;margin:8px 0}
+  input{width:100%;padding:14px;font-size:18px;border:1px solid #cbd5e1;border-radius:10px;text-align:center;direction:ltr}
+  button{width:100%;padding:14px;font-size:16px;border:0;border-radius:10px;margin-top:12px;cursor:pointer;color:#fff;background:#2563eb;font-family:inherit}
+  button.green{background:#16a34a} button.red{background:#dc2626} button.gray{background:#64748b}
+  button:disabled{opacity:.6}
+  .row{display:flex;gap:10px}
+  .name{font-size:20px;font-weight:bold;text-align:center;color:#1d4ed8;margin:12px 0}
+  .box{background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:14px;margin-top:12px}
+  .err{color:#b91c1c;text-align:center;min-height:24px;margin-top:8px}
+  .warn{background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:14px;text-align:center}
+  .num{font-size:22px;font-weight:bold;color:#15803d}
+  .hide{display:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1 id="title">ثبت‌نام دوره ایمنی</h1>
+
+  <!-- مرحله ۱ -->
+  <div id="s1">
+    <p>کد پرسنلی خود را وارد کنید:</p>
+    <input id="code" type="text" inputmode="numeric" autocomplete="off">
+    <div class="err" id="err1"></div>
+    <button id="b1">ادامه</button>
+  </div>
+
+  <!-- مرحله ۲ -->
+  <div id="s2" class="hide">
+    <p>آیا نام و نام خانوادگی زیر را تایید می‌کنید؟</p>
+    <div class="name" id="nm"></div>
+    <div class="row">
+      <button class="green" id="b2y">بله، تایید</button>
+      <button class="gray" id="b2n">خیر</button>
+    </div>
+  </div>
+
+  <!-- مرحله ۳ -->
+  <div id="s3" class="hide">
+    <p id="ask"></p>
+    <div class="err" id="err3"></div>
+    <div class="row">
+      <button class="green" id="b3y">تایید</button>
+      <button class="red" id="b3n">رد</button>
+    </div>
+  </div>
+
+  <!-- نتیجه -->
+  <div id="s4" class="hide">
+    <div class="box">
+      <p>نام و نام خانوادگی: <b id="rn"></b></p>
+      <p>تاریخ‌های برگزاری: <b id="rd"></b></p>
+      <p>درخواست شما ثبت گردید.<br>شماره ثبت: <span class="num" id="rnum"></span></p>
+    </div>
+  </div>
+
+  <div id="s5" class="hide"><div class="warn" id="msg"></div></div>
+</div>
+
+<script>
+// ▼ آدرس Web App که از Google Apps Script می‌گیرید را اینجا بگذارید
+const API = "https://script.google.com/macros/s/AKfycbymO90jAtA64NimT8WB8myjd_3frlHRVwW4QE8BtuE0fjP7YUIWHvjA-8UNy7JsdsH9/exec";
+
+const $ = id => document.getElementById(id);
+const fa = n => Number(n).toLocaleString('fa-IR');
+const D = '۰۱۲۳۴۵۶۷۸۹', A = '٠١٢٣٤٥٦٧٨٩';
+const norm = s => s.replace(/[۰-۹]/g, d => D.indexOf(d)).replace(/[٠-٩]/g, d => A.indexOf(d)).trim();
+let info = null, code = '';
+
+function show(id){ ['s1','s2','s3','s4','s5'].forEach(s => $(s).classList.toggle('hide', s !== id)); }
+function end(text){ $('msg').innerHTML = text; show('s5'); }
+
+async function call(params){
+  const r = await fetch(API + '?' + new URLSearchParams(params));
+  return r.json();
+}
+
+$('b1').onclick = async () => {
+  code = norm($('code').value);
+  $('err1').textContent = '';
+  if(!code){ $('err1').textContent = 'کد پرسنلی را وارد کنید.'; return; }
+  $('b1').disabled = true; $('b1').textContent = 'لطفاً صبر کنید...';
+  try{
+    const d = await call({action:'lookup', code});
+    if(!d.ok){
+      $('err1').textContent = d.error === 'notfound' ? 'این کد پرسنلی در لیست وجود ندارد.' : 'خطا، دوباره تلاش کنید.';
+      return;
+    }
+    info = d;
+    $('title').textContent = d.title;
+    if(d.already){ showResult(d.name, d.dates, d.number); return; }
+    if(d.closed){ end('ثبت‌نام این دوره در حال حاضر بسته است.'); return; }
+    if(d.full){ end('ظرفیت دوره تکمیل شد.<br>شما می‌توانید در گروه بعدی شرکت کنید.'); return; }
+    $('nm').textContent = d.name;
+    show('s2');
+  }catch(e){
+    $('err1').textContent = 'خطا در اتصال. اینترنت را بررسی کنید.';
+  }finally{
+    $('b1').disabled = false; $('b1').textContent = 'ادامه';
+  }
+};
+
+$('b2n').onclick = () => { $('code').value = ''; show('s1'); };
+
+$('b2y').onclick = () => {
+  $('ask').textContent = 'شما درخواست شرکت در ' + info.title + ' در تاریخ‌های ' + info.dates +
+    ' را دارید. چنانچه از حضور خود در این کلاس‌ها اطمینان دارید دکمه تایید را بزنید، در غیر این صورت رد را بزنید.';
+  show('s3');
+};
+
+function showResult(name, dates, num){
+  $('rn').textContent = name; $('rd').textContent = dates; $('rnum').textContent = fa(num);
+  show('s4');
+}
+
+async function submit(decision){
+  $('err3').textContent = '';
+  $('b3y').disabled = $('b3n').disabled = true;
+  try{
+    const d = await call({action:'submit', code, decision});
+    if(!d.ok){ $('err3').textContent = 'خطا، دوباره تلاش کنید.'; return; }
+    if(d.status === 'confirmed') showResult(d.name, d.dates, d.number);
+    else if(d.status === 'rejected') end('درخواست شما ثبت نشد.');
+    else if(d.status === 'full') end('ظرفیت ' + fa(d.capacity) + ' نفر تکمیل شد.<br>شما می‌توانید در گروه بعدی شرکت کنید.');
+    else end('ثبت‌نام این دوره بسته است.');
+  }catch(e){
+    $('err3').textContent = 'خطا در اتصال. دوباره تلاش کنید.';
+  }finally{
+    $('b3y').disabled = $('b3n').disabled = false;
+  }
+}
+$('b3y').onclick = () => submit('confirm');
+$('b3n').onclick = () => submit('reject');
+$('code').addEventListener('keydown', e => { if(e.key === 'Enter') $('b1').click(); });
+</script>
+</body>
+</html>
