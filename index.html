@@ -4,15 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ثبت‌نام دوره ایمنی</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-font-face.css">
 <style>
   *{box-sizing:border-box}
-  body{margin:0;font-family:Tahoma,Vazirmatn,sans-serif;background:#eef2f6;color:#1f2937;display:flex;justify-content:center;padding:16px}
+  body{margin:0;font-family:Vazirmatn,Tahoma,sans-serif;background:#eef2f6;color:#1f2937;display:flex;justify-content:center;padding:16px}
   .card{background:#fff;width:100%;max-width:420px;border-radius:14px;padding:22px;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-top:24px}
   h1{font-size:18px;margin:0 0 16px;text-align:center}
   p{line-height:2;margin:8px 0}
-  input{width:100%;padding:14px;font-size:18px;border:1px solid #cbd5e1;border-radius:10px;text-align:center;direction:ltr}
-  button{width:100%;padding:14px;font-size:16px;border:0;border-radius:10px;margin-top:12px;cursor:pointer;color:#fff;background:#2563eb;font-family:inherit}
-  button.green{background:#16a34a} button.red{background:#dc2626} button.gray{background:#64748b}
+  input{width:100%;padding:14px;font-size:18px;border:1px solid #cbd5e1;border-radius:10px;text-align:center;direction:ltr;font-family:inherit}
+  button{width:100%;padding:14px;font-size:16px;border:0;border-radius:10px;margin-top:12px;cursor:pointer;color:#fff;font-family:inherit}
+  button.blue{background:#2563eb}
+  button.green{background:#16a34a}
+  button.red{background:#dc2626}
   button:disabled{opacity:.6}
   .row{display:flex;gap:10px}
   .name{font-size:20px;font-weight:bold;text-align:center;color:#1d4ed8;margin:12px 0}
@@ -20,6 +23,11 @@
   .err{color:#b91c1c;text-align:center;min-height:24px;margin-top:8px}
   .warn{background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:14px;text-align:center}
   .num{font-size:22px;font-weight:bold;color:#15803d}
+  .timer{text-align:center;color:#64748b;font-size:13px;margin-top:10px}
+  .list{margin-top:16px;border-top:1px solid #e2e8f0;padding-top:10px}
+  .list h2{font-size:15px;margin:0 0 6px}
+  .list div{padding:3px 0;font-size:14px}
+  .list .me{color:#15803d;font-weight:bold}
   .hide{display:none}
 </style>
 </head>
@@ -27,25 +35,22 @@
 <div class="card">
   <h1 id="title">ثبت‌نام دوره ایمنی</h1>
 
-  <!-- مرحله ۱ -->
   <div id="s1">
     <p>کد پرسنلی خود را وارد کنید:</p>
     <input id="code" type="text" inputmode="numeric" autocomplete="off">
     <div class="err" id="err1"></div>
-    <button id="b1">ادامه</button>
+    <button class="blue" id="b1">ادامه</button>
   </div>
 
-  <!-- مرحله ۲ -->
   <div id="s2" class="hide">
     <p>آیا نام و نام خانوادگی زیر را تایید می‌کنید؟</p>
     <div class="name" id="nm"></div>
     <div class="row">
       <button class="green" id="b2y">بله، تایید</button>
-      <button class="gray" id="b2n">خیر</button>
+      <button class="red" id="b2n">خیر</button>
     </div>
   </div>
 
-  <!-- مرحله ۳ -->
   <div id="s3" class="hide">
     <p id="ask"></p>
     <div class="err" id="err3"></div>
@@ -55,12 +60,16 @@
     </div>
   </div>
 
-  <!-- نتیجه -->
   <div id="s4" class="hide">
     <div class="box">
       <p>نام و نام خانوادگی: <b id="rn"></b></p>
       <p>تاریخ‌های برگزاری: <b id="rd"></b></p>
-      <p>درخواست شما ثبت گردید.<br>شماره ثبت: <span class="num" id="rnum"></span></p>
+      <p>درخواست شما ثبت گردید.<br>شرکت‌کننده: <span class="num" id="rnum"></span></p>
+    </div>
+    <div class="timer" id="timer"></div>
+    <div class="list">
+      <h2>نفرات ثبت‌نام‌شده:</h2>
+      <div id="plist"></div>
     </div>
   </div>
 
@@ -69,7 +78,7 @@
 
 <script>
 // ▼ آدرس Web App که از Google Apps Script می‌گیرید را اینجا بگذارید
-const API = "https://script.google.com/macros/s/AKfycbymO90jAtA64NimT8WB8myjd_3frlHRVwW4QE8BtuE0fjP7YUIWHvjA-8UNy7JsdsH9/exec";
+const API = "PASTE_YOUR_WEB_APP_URL_HERE";
 
 const $ = id => document.getElementById(id);
 const fa = n => Number(n).toLocaleString('fa-IR');
@@ -98,7 +107,7 @@ $('b1').onclick = async () => {
     }
     info = d;
     $('title').textContent = d.title;
-    if(d.already){ showResult(d.name, d.dates, d.number); return; }
+    if(d.already){ showResult(d.name, d.dates, d.number, d.list); return; }
     if(d.closed){ end('ثبت‌نام این دوره در حال حاضر بسته است.'); return; }
     if(d.full){ end('ظرفیت دوره تکمیل شد.<br>شما می‌توانید در گروه بعدی شرکت کنید.'); return; }
     $('nm').textContent = d.name;
@@ -114,13 +123,29 @@ $('b2n').onclick = () => { $('code').value = ''; show('s1'); };
 
 $('b2y').onclick = () => {
   $('ask').textContent = 'شما درخواست شرکت در ' + info.title + ' در تاریخ‌های ' + info.dates +
-    ' را دارید. چنانچه از حضور خود در تاریخ های فوق اطمینان دارید دکمه تایید را بزنید، در غیر این صورت دکمه رد را بزنید.';
+    ' را دارید. چنانچه از حضور خود در این کلاس‌ها اطمینان دارید دکمه تایید را بزنید، در غیر این صورت رد را بزنید.';
   show('s3');
 };
 
-function showResult(name, dates, num){
+function showResult(name, dates, num, list){
   $('rn').textContent = name; $('rd').textContent = dates; $('rnum').textContent = fa(num);
+  const box = $('plist'); box.innerHTML = '';
+  (list || []).forEach((n, i) => {
+    const row = document.createElement('div');
+    row.textContent = fa(i + 1) + '- ' + n;
+    if(i + 1 === num) row.className = 'me';
+    box.appendChild(row);
+  });
   show('s4');
+  let t = 10;
+  $('timer').textContent = 'این صفحه تا ' + fa(t) + ' ثانیه دیگر بسته می‌شود.';
+  const iv = setInterval(() => {
+    t--;
+    if(t > 0){ $('timer').textContent = 'این صفحه تا ' + fa(t) + ' ثانیه دیگر بسته می‌شود.'; return; }
+    clearInterval(iv);
+    end('ثبت‌نام شما انجام شد.<br>می‌توانید این صفحه را ببندید.');
+    try{ window.close(); }catch(e){}
+  }, 1000);
 }
 
 async function submit(decision){
@@ -129,7 +154,7 @@ async function submit(decision){
   try{
     const d = await call({action:'submit', code, decision});
     if(!d.ok){ $('err3').textContent = 'خطا، دوباره تلاش کنید.'; return; }
-    if(d.status === 'confirmed') showResult(d.name, d.dates, d.number);
+    if(d.status === 'confirmed') showResult(d.name, d.dates, d.number, d.list);
     else if(d.status === 'rejected') end('درخواست شما ثبت نشد.');
     else if(d.status === 'full') end('ظرفیت ' + fa(d.capacity) + ' نفر تکمیل شد.<br>شما می‌توانید در گروه بعدی شرکت کنید.');
     else end('ثبت‌نام این دوره بسته است.');
