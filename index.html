@@ -128,7 +128,7 @@ $('b2n').onclick = () => { $('code').value = ''; show('s1'); };
 
 $('b2y').onclick = () => {
   const esc = x => String(x).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  $('ask').innerHTML = 'شما درخواست شرکت در ' + esc(info.title) + ' در تاریخ‌های ' + esc(info.dates) +
+  $('ask').innerHTML = 'شما درخواست شرکت در ' + esc(info.title) + ' در تاریخ‌ ' + esc(info.dates) +
     ' را دارید. چنانچه از حضور خود در این کلاس‌ها اطمینان دارید دکمه <span class="g">تایید</span> را بزنید، در غیر این صورت <span class="r">رد</span> را بزنید.';
   show('s3');
 };
